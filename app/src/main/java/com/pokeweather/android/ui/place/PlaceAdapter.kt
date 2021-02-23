@@ -10,8 +10,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.pokeweather.android.R
 import com.pokeweather.android.logic.model.Place
 import com.pokeweather.android.ui.weather.WeatherActivity
+import kotlinx.android.synthetic.main.activity_weather.*
 
-class PlaceAdapter(private val fragment: PlaceFragment, private val placeList: List<Place>) :
+class PlaceAdapter(private val placeFragment: PlaceFragment, private val placeList: List<Place>) :
     RecyclerView.Adapter<PlaceAdapter.ViewHolder>() {
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -27,15 +28,24 @@ class PlaceAdapter(private val fragment: PlaceFragment, private val placeList: L
         holder.itemView.setOnClickListener {
             val position = holder.adapterPosition
             val place = placeList[position]
-            val intent = Intent(parent.context, WeatherActivity::class.java).apply {
-                putExtra("location_lng", place.location.lng)
-                putExtra("location_lat", place.location.lat)
-                putExtra("place_name", place.name)
-            }
+            val activity = placeFragment.activity
+            if (activity is WeatherActivity) {
+                activity.drawerLayout.closeDrawers()
+                activity.weatherViewModel.locationLng = place.location.lng
+                activity.weatherViewModel.locationLat = place.location.lat
+                activity.weatherViewModel.placeName = place.name
+                activity.refreshWeather()
 
-            fragment.placeViewModel.savePlace(place)
-            fragment.startActivity(intent)
-            fragment.activity?.finish()
+            }else {
+                val intent = Intent(parent.context, WeatherActivity::class.java).apply {
+                    putExtra("location_lng", place.location.lng)
+                    putExtra("location_lat", place.location.lat)
+                    putExtra("place_name", place.name)
+                }
+                placeFragment.startActivity(intent)
+                activity?.finish()
+            }
+            placeFragment.placeViewModel.savePlace(place)
         }
 
         return holder
